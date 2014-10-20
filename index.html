@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="Explore YouTube videos related to your favorite topics!.">
+    <meta name="description" content="Explore YouTube videos related to your favorite topics!">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>YouTube Topic Explorer</title>
 
@@ -18,6 +18,9 @@
   <body fullbleed unresolved>
     <template is="auto-binding" id="page-template">
       <style>
+        body {
+          font-family: RobotoDraft, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
         core-animated-pages {
           position: absolute;
           top: 0;
@@ -34,51 +37,74 @@
         }
 
         #loading {
-          font-size: 6em;
+          font-size: 2em;
+          text-align: center;
         }
 
         .hidden {
           visibility: hidden;
         }
+
+        #signin {
+          margin: 2em;
+        }
+
+        #topics {
+          margin: 2em;
+          overflow-y: scroll;
+        }
+
+        #topics paper-button {
+          display: inline-block;
+          margin: 0.5em;
+        }
       </style>
 
-      <core-animated-pages selected="{{selectedPage}}">
-        <div vertical layout>
-          <p>Sign in to view a personalized list of topics related to your YouTube activities.</p>
-          <p>Your watch history, watch later list, favorites, likes, and uploads will be used to determine which topics are most relevant to you.</p>
-          <p>The data is retrieved using the public YouTube API, and no information is stored on this server.</p>
-          <google-signin clientId="269758065116-rt2ius6em56aocshmukoc8earl6svt42.apps.googleusercontent.com"
-                         scopes="https://www.googleapis.com/auth/youtube.readonly"
-                         on-google-signin-success="{{handleSignInSuccess}}"
-                         on-google-signed-out="{{handleSignOut}}">
-          </google-signin>
-        </div>
+      <core-animated-pages selected="{{selectedPage}}" transitions="hero-transition cross-fade">
+        <section id="signin">
+          <div cross-fade>
+            <p>Sign in to view a personalized list of topics related to your YouTube activities, and watch videos related to those topics using <a href="https://github.com/GoogleWebComponents/google-youtube-video-wall">&lt;google-youtube-video-wall&gt;</a>.</p>
+            <p>Your watch history, watch later list, favorites, likes, and uploads will be used to determine which topics are most relevant to you.</p>
+            <p>The data is retrieved using the public <a href="https://developers.google.com/youtube/v3/">YouTube API</a> and <a href="https://developers.google.com/freebase/v1/">Freebase API</a>, and no information is stored on this server.</p>
+            <google-signin clientId="269758065116-rt2ius6em56aocshmukoc8earl6svt42.apps.googleusercontent.com"
+                           scopes="https://www.googleapis.com/auth/youtube.readonly"
+                           on-google-signin-success="{{handleSignInSuccess}}"
+                           on-google-signed-out="{{handleSignOut}}">
+            </google-signin>
+          </div>
+        </section>
 
-        <div horizontal center around-justified wrap layout>
-          <template if="{{!topics}}">
-            <p id="loading">Personalizing topics...</p>
-          </template>
+        <section id="topics">
+          <div cross-fade>
+            <template if="{{!topics}}">
+              <p id="loading">Personalizing topics...</p>
+            </template>
 
-          <template repeat="{{topic in topics}}">
-            <paper-button raised
-                          data-mid="{{topic.mid}}"
-                          data-name="{{topic.name}}"
-                          on-tap="{{handleTopicButtonTap}}">
-              <core-icon icon="av:video-youtube"></core-icon>
-              {{topic.name}}
-            </paper-button>
-          </template>
-        </div>
+            <template repeat="{{topic in topics}}">
+              <paper-button raised
+                            data-mid="{{topic.mid}}"
+                            data-name="{{topic.name}}"
+                            on-tap="{{handleTopicButtonTap}}">
+                <core-icon icon="av:video-youtube"></core-icon>
+                <span hero hero-id="{{topic.mid}}">{{topic.name}}</span>
+              </paper-button>
+            </template>
+          </div>
+        </section>
 
-        <div>
-          <template if="{{topicId}}">
-            <google-youtube-video-wall apiKey="AIzaSyDPCDZ_nGG1AW7swdT74rptHrQAiucDgek"
-                                       wallTitle="Videos related to '{{topicName}}'"
-                                       topicId="{{topicId}}"
-                                       fit>
-            </google-youtube-video-wall>
-          </template>
-        </div>
+        <section>
+          <div cross-fade>
+            <template if="{{topicId}}">
+              <google-youtube-video-wall apiKey="AIzaSyDPCDZ_nGG1AW7swdT74rptHrQAiucDgek"
+                                         wallTitle="Videos related to '{{topicName}}'"
+                                         topicId="{{topicId}}"
+                                         fit
+                                         hero
+                                         hero-id="{{topicId}}">
+              </google-youtube-video-wall>
+            </template>
+          </div>
+        </section>
       </core-animated-pages>
 
       <nav horizontal justified layout>
@@ -184,10 +210,12 @@
       };
 
       template.handleTopicButtonTap = function(e) {
-        template.selectedPage = 2;
+        setTimeout(function() {
+          template.selectedPage = 2;
 
-        template.topicName = e.target.dataset.name || e.target.parentElement.dataset.name;
-        template.topicId = e.target.dataset.mid || e.target.parentElement.dataset.mid;
+          template.topicName = e.target.dataset.name || e.target.parentElement.dataset.name;
+          template.topicId = e.target.dataset.mid || e.target.parentElement.dataset.mid;
+        }, 100);
       };
 
       template.handleBackButtonClick = function() {
