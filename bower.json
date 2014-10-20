@@ -29,8 +29,9 @@
     "tests"
   ],
   "dependencies": {
-    "polymer": "Polymer/polymer#~0.4.2",
+    "es6-shim": "paulmillr/es6-shim#~0.19.1",
     "google-signin": "GoogleWebComponents/google-signin#~0.1.0",
-    "google-youtube-video-wall": "GoogleWebComponents/google-youtube-video-wall#~1.0.1"
+    "google-youtube-video-wall": "GoogleWebComponents/google-youtube-video-wall#~1.0.2",
+    "polymer": "Polymer/polymer#^0.4.2"
   }
 }
