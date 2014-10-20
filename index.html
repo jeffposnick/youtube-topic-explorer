@@ -51,7 +51,7 @@
 
         #topics {
           margin: 2em;
-          overflow-y: scroll;
+          overflow-y: auto;
         }
 
         #topics paper-button {
@@ -76,8 +76,12 @@
 
         <section id="topics">
           <div cross-fade>
-            <template if="{{!topics}}">
+            <template if="{{!topics && !error}}">
               <p id="loading">Personalizing topics...</p>
+            </template>
+
+            <template if="{{error}}">
+              <pre>{{error}}</pre>
             </template>
 
             <template repeat="{{topic in topics}}">
@@ -161,18 +165,23 @@
                   id: idParam
                 }
               });
-            }).then(function(response) {
-              var topicIds = [];
-              response.result.items.forEach(function(video) {
-                if ('topicDetails' in video) {
-                  Object.keys(video.topicDetails).forEach(function (topicType) {
-                    topicIds = topicIds.concat(video.topicDetails[topicType]);
-                  });
-                }
-              });
+            }).then(
+              function(response) {
+                var topicIds = [];
+                response.result.items.forEach(function(video) {
+                  if ('topicDetails' in video) {
+                    Object.keys(video.topicDetails).forEach(function (topicType) {
+                      topicIds = topicIds.concat(video.topicDetails[topicType]);
+                    });
+                  }
+                });
 
-              return topicIds;
-            });
+                return topicIds;
+              },
+              function(error) {
+                return [];
+              }
+            );
           });
 
           Promise.all(requestPromises).then(function(topicIdArrays) {
@@ -199,9 +208,15 @@
                 mid: topicIds
               }
             });
-          }).then(function(response) {
-            template.topics = response.result.result;
-          });
+          }).then(
+            function(response) {
+              template.error = null;
+              template.topics = response.result.result;
+            },
+            function(error) {
+              template.error = JSON.stringify(error, null, '\t');
+            }
+          );
         });
       };
 
