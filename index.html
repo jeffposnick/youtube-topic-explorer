@@ -121,6 +121,13 @@
           Back
         </paper-button>
 
+        <template if="{{channelTitle && channelThumbnail && channelId}}">
+          <paper-button on-click="{{handleChannelClick}}">
+            <core-icon src="{{channelThumbnail}}"></core-icon>
+            {{channelTitle}}
+          </paper-button>
+        </template>
+
         <paper-button class="{{ {hidden: selectedPage != 0 || topics == null} | tokenList }}"
                       on-click="{{handleForwardButtonClick}}">
           Forward
@@ -140,12 +147,18 @@
         gapi.client.request({
           path: 'youtube/v3/channels',
           params: {
-            part: 'contentDetails',
+            part: 'snippet,contentDetails',
             mine: true
           }
         }).then(function(response) {
-          return Object.keys(response.result.items[0].contentDetails.relatedPlaylists).map(function(playlistName) {
-            return response.result.items[0].contentDetails.relatedPlaylists[playlistName];
+          var channel = response.result.items[0];
+
+          template.channelTitle = channel.snippet.title;
+          template.channelThumbnail = channel.snippet.thumbnails.default.url;
+          template.channelId = channel.id;
+
+          return Object.keys(channel.contentDetails.relatedPlaylists).map(function(playlistName) {
+            return channel.contentDetails.relatedPlaylists[playlistName];
           });
         }).then(function(playlistIds) {
           var requestPromises = playlistIds.map(function(playlistId) {
@@ -240,6 +253,10 @@
         if (template.selectedPage > 0) {
           template.selectedPage--;
         }
+      };
+
+      template.handleChannelClick = function() {
+        window.open('https://www.youtube.com/channel/' + template.channelId, '_blank');
       };
 
       template.handleForwardButtonClick = function() {
