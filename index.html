@@ -91,8 +91,6 @@
 
             <template repeat="{{topic in topics}}">
               <paper-button raised
-                            data-mid="{{topic.mid}}"
-                            data-name="{{topic.name}}"
                             on-tap="{{handleTopicButtonTap}}">
                 <core-icon icon="av:video-youtube"></core-icon>
                 <span hero hero-id="{{topic.mid}}">{{topic.name}}</span>
@@ -246,8 +244,8 @@
         setTimeout(function() {
           template.selectedPage = 2;
 
-          template.topicName = e.target.dataset.name || e.target.parentElement.dataset.name;
-          template.topicId = e.target.dataset.mid || e.target.parentElement.dataset.mid;
+          template.topicName = e.target.templateInstance.model.topic.name;
+          template.topicId = e.target.templateInstance.model.topic.mid;
         }, 100);
       };
 
