@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Explore YouTube videos related to your favorite topics!">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>YouTube Topic Explorer</title>
+
+    <link href="manifest.json" rel="manifest">
+    <link href="images/ic_video_collection_black_48dp.png" rel="shortcut icon">
+
+    <script src="bower_components/platform/platform.js"></script>
+    <script src="bower_components/es6-shim/es6-shim.min.js"></script>
+
+    <link href="bower_components/core-animated-pages/core-animated-pages.html" rel="import">
+    <link href="bower_components/google-signin/google-signin.html" rel="import">
+    <link href="bower_components/paper-button/paper-button.html" rel="import">
+    <link href="bower_components/core-icons/av-icons.html" rel="import">
+    <link href="bower_components/google-youtube-video-wall/google-youtube-video-wall.html" rel="import">
+  </head>
+
+  <body fullbleed unresolved>
+    <template is="auto-binding" id="page-template">
+      <style>
+        body {
+          font-family: RobotoDraft, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+        core-animated-pages {
+          position: absolute;
+          top: 0;
+          left: 0;
+          bottom: 50px;
+          right: 0;
+        }
+
+        nav {
+          position: absolute;
+          left: 0;
+          bottom: 0;
+          right: 0;
+        }
+
+        #loading {
+          font-size: 2em;
+          text-align: center;
+        }
+
+        .hidden {
+          visibility: hidden;
+        }
+
+        #signin {
+          margin: 2em;
+        }
+
+        #topics {
+          margin: 2em;
+          overflow-y: auto;
+        }
+
+        #topics paper-button {
+          display: inline-block;
+          margin: 0.5em;
+        }
+      </style>
+
+      <core-animated-pages selected="{{selectedPage}}" transitions="hero-transition cross-fade">
+        <section id="signin">
+          <div cross-fade>
+            <p>Sign in to view a personalized list of topics related to your YouTube activities, and watch videos related to those topics using <a href="https://github.com/GoogleWebComponents/google-youtube-video-wall">&lt;google-youtube-video-wall&gt;</a>.</p>
+            <p>Your watch history, watch later list, favorites, likes, and uploads will be used to determine which topics are most relevant to you.</p>
+            <p>The data is retrieved using the public <a href="https://developers.google.com/youtube/v3/">YouTube API</a> and <a href="https://developers.google.com/freebase/v1/">Freebase API</a>, and no information is stored on this server.</p>
+            <google-signin clientId="269758065116-rt2ius6em56aocshmukoc8earl6svt42.apps.googleusercontent.com"
+                           scopes="https://www.googleapis.com/auth/youtube.readonly"
+                           on-google-signin-success="{{handleSignInSuccess}}"
+                           on-google-signed-out="{{handleSignOut}}">
+            </google-signin>
+          </div>
+        </section>
+
+        <section id="topics">
+          <div cross-fade>
+            <template if="{{!topics && !error}}">
+              <p id="loading">Personalizing topics...</p>
+            </template>
+
+            <template if="{{error}}">
+              <pre>{{error}}</pre>
+            </template>
+
+            <template repeat="{{topic in topics}}">
+              <paper-button raised
+                            on-tap="{{handleTopicButtonTap}}">
+                <core-icon icon="av:video-youtube"></core-icon>
+                <span hero hero-id="{{topic.mid}}">{{topic.name}}</span>
+              </paper-button>
+            </template>
+          </div>
+        </section>
+
+        <section>
+          <div cross-fade>
+            <template if="{{topicId}}">
+              <google-youtube-video-wall apiKey="AIzaSyDPCDZ_nGG1AW7swdT74rptHrQAiucDgek"
+                                         wallTitle="Videos related to '{{topicName}}'"
+                                         topicId="{{topicId}}"
+                                         fit
+                                         hero
+                                         hero-id="{{topicId}}">
+              </google-youtube-video-wall>
+            </template>
+          </div>
+        </section>
+      </core-animated-pages>
+
+      <nav horizontal justified layout>
+        <paper-button class="{{ {hidden: selectedPage <= 0} | tokenList }}"
+                      on-click="{{handleBackButtonClick}}">
+          <core-icon icon="arrow-back"></core-icon>
+          Back
+        </paper-button>
+
+        <template if="{{channelTitle && channelThumbnail && channelId}}">
+          <paper-button on-click="{{handleChannelClick}}">
+            <core-icon src="{{channelThumbnail}}"></core-icon>
+            {{channelTitle}}
+          </paper-button>
+        </template>
+
+        <paper-button class="{{ {hidden: selectedPage != 0 || topics == null} | tokenList }}"
+                      on-click="{{handleForwardButtonClick}}">
+          Forward
+          <core-icon icon="arrow-forward"></core-icon>
+        </paper-button>
+      </nav>
+    </template>
+
+    <script>
+      var template = document.querySelector('#page-template');
+      template.selectedPage = 0;
+
+      template.handleSignInSuccess = function(e) {
+        template.selectedPage = 1;
+
+        var gapi = e.detail.gapi;
+        gapi.client.request({
+          path: 'youtube/v3/channels',
+          params: {
+            part: 'snippet,contentDetails',
+            mine: true
+          }
+        }).then(function(response) {
+          var channel = response.result.items[0];
+
+          template.channelTitle = channel.snippet.title;
+          template.channelThumbnail = channel.snippet.thumbnails.default.url;
+          template.channelId = channel.id;
+
+          return Object.keys(channel.contentDetails.relatedPlaylists).map(function(playlistName) {
+            return channel.contentDetails.relatedPlaylists[playlistName];
+          });
+        }).then(function(playlistIds) {
+          var requestPromises = playlistIds.map(function(playlistId) {
+            return gapi.client.request({
+              path: 'youtube/v3/playlistItems',
+              params: {
+                part: 'snippet',
+                playlistId: playlistId,
+                maxResults: 50
+              }
+            }).then(function(response) {
+              return response.result.items.map(function(playlistItem) {
+                return playlistItem.snippet.resourceId.videoId;
+              }).join(',');
+            }).then(function(idParam) {
+              return gapi.client.request({
+                path: 'youtube/v3/videos',
+                params: {
+                  part: 'topicDetails',
+                  id: idParam
+                }
+              });
+            }).then(
+              function(response) {
+                var topicIds = [];
+                response.result.items.forEach(function(video) {
+                  if ('topicDetails' in video) {
+                    Object.keys(video.topicDetails).forEach(function (topicType) {
+                      topicIds = topicIds.concat(video.topicDetails[topicType]);
+                    });
+                  }
+                });
+
+                return topicIds;
+              },
+              function(error) {
+                return [];
+              }
+            );
+          });
+
+          Promise.all(requestPromises).then(function(topicIdArrays) {
+            var topicIds = [].concat.apply([], topicIdArrays);
+            var weightedTopicIds = {};
+            topicIds.forEach(function(topicId) {
+              if (topicId in weightedTopicIds) {
+                weightedTopicIds[topicId]++;
+              } else {
+                weightedTopicIds[topicId] = 1;
+              }
+            });
+
+            topicIds = Object.keys(weightedTopicIds);
+            topicIds.sort(function(a, b) {
+              return weightedTopicIds[b] - weightedTopicIds[a];
+            });
+
+            return topicIds.slice(0, 20);
+          }).then(function(topicIds) {
+            return gapi.client.request({
+              path: 'freebase/v1/search',
+              params: {
+                mid: topicIds
+              }
+            });
+          }).then(
+            function(response) {
+              template.error = null;
+              template.topics = response.result.result;
+            },
+            function(error) {
+              template.error = JSON.stringify(error, null, '\t');
+            }
+          );
+        });
+      };
+
+      template.handleSignOut = function() {
+        template.topics = null;
+      };
+
+      template.handleTopicButtonTap = function(e) {
+        setTimeout(function() {
+          template.selectedPage = 2;
+
+          template.topicName = e.target.templateInstance.model.topic.name;
+          template.topicId = e.target.templateInstance.model.topic.mid;
+        }, 100);
+      };
+
+      template.handleBackButtonClick = function() {
+        if (template.selectedPage > 0) {
+          template.selectedPage--;
+        }
+      };
+
+      template.handleChannelClick = function() {
+        window.open('https://www.youtube.com/channel/' + template.channelId, '_blank');
+      };
+
+      template.handleForwardButtonClick = function() {
+        if (template.selectedPage < 2) {
+          template.selectedPage++;
+        }
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+{
+  "name": "youtube-topic-explorer",
+  "version": "1.0.0",
+  "homepage": "https://github.com/jeffposnick/youtube-topic-explorer",
+  "authors": [
+    "Jeff Posnick <jeffy@google.com>"
+  ],
+  "description": "Explore YouTube videos related to your favorite topics!",
+  "main": "index.html",
+  "keywords": [
+    "youtube",
+    "freebase",
+    "open",
+    "knowledge",
+    "graph",
+    "polymer",
+    "web",
+    "components",
+    "youtube",
+    "data",
+    "api"
+  ],
+  "license": "Apache-2.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "es6-shim": "paulmillr/es6-shim#~0.19.1",
+    "google-signin": "GoogleWebComponents/google-signin#~0.1.0",
+    "google-youtube-video-wall": "GoogleWebComponents/google-youtube-video-wall#~1.0.2",
+    "polymer": "Polymer/polymer#^0.4.2"
+  }
+}

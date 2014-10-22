@@ -1,0 +1,31 @@
+{
+  "name": "YouTube Topic Explorer",
+  "icons": [
+    {
+      "src": "images/ic_video_collection_black_18dp.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "density": "1.5"
+    },
+    {
+      "src": "images/ic_video_collection_black_24dp.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "density": "2.0"
+    },
+    {
+      "src": "images/ic_video_collection_black_36dp.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "density": "3.0"
+    },
+    {
+      "src": "images/ic_video_collection_black_48dp.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "density": "4.0"
+    }
+  ],
+  "start_url": "index.html",
+  "display": "standalone"
+}
